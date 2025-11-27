@@ -1,89 +1,289 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Serverless Image Processor</title>
 
-    <!-- update the version number as needed -->
+    <!-- Firebase SDK (solo lo que usamos) -->
     <script defer src="/__/firebase/12.6.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.6.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.6.0/firebase-database-compat.js"></script>
     <script defer src="/__/firebase/12.6.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.6.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.6.0/firebase-messaging-compat.js"></script>
     <script defer src="/__/firebase/12.6.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.6.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.6.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.6.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
     <script defer src="/__/firebase/init.js?useEmulator=true"></script>
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
+    <!-- Nuestra lógica de frontend -->
+    <script defer src="/app.js"></script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #0f172a, #020617 60%);
+        color: #e5e7eb;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1100px;
+        padding: 2rem 1.5rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+        gap: 2rem;
+      }
+
+      @media (max-width: 900px) {
+        .container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 1rem;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 20px 45px rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+
+      h1 {
+        margin: 0 0 0.3rem;
+        font-size: 1.9rem;
+        letter-spacing: 0.03em;
+        color: #38bdf8;
+      }
+
+      .subtitle {
+        margin: 0 0 1.5rem;
+        color: #9ca3af;
+        font-size: 0.95rem;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.15rem 0.7rem;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.12);
+        color: #7dd3fc;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.8rem;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        margin-top: 0.3rem;
+      }
+
+      label {
+        font-size: 0.9rem;
+        color: #cbd5f5;
+      }
+
+      .file-input {
+        padding: 0.75rem 0.9rem;
+        border-radius: 0.75rem;
+        border: 1px dashed rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.9);
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+      }
+
+      .file-input span {
+        opacity: 0.9;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.7rem 1.4rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        background: linear-gradient(135deg, #38bdf8, #22c55e);
+        color: #020617;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.5);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        align-self: flex-start;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 40px rgba(22, 163, 74, 0.65);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        box-shadow: none;
+        transform: none;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        min-height: 1.2rem;
+        color: #e5e7eb;
+      }
+
+      .status.error {
+        color: #fca5a5;
+      }
+
+      .status.ok {
+        color: #4ade80;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-top: 1rem;
+        font-size: 0.78rem;
+      }
+
+      .pill {
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        background: rgba(30, 64, 175, 0.6);
+        border: 1px solid rgba(129, 140, 248, 0.5);
+        color: #c7d2fe;
+      }
+
+      .gallery-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .gallery-header h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .gallery-header span {
+        font-size: 0.8rem;
+        color: #9ca3af;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+      }
+
+      .image-card {
+        background: rgba(15, 23, 42, 0.9);
+        border-radius: 0.9rem;
+        overflow: hidden;
+        border: 1px solid rgba(55, 65, 81, 0.8);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .image-card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .image-card .meta {
+        padding: 0.6rem 0.75rem 0.8rem;
+      }
+
+      .image-card .name {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #e5e7eb;
+        word-break: break-all;
+      }
+
+      .image-card .info {
+        margin: 0.25rem 0 0;
+        font-size: 0.75rem;
+        color: #9ca3af;
+      }
+
+      .empty {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        text-align: center;
+        padding: 1.5rem 0.5rem;
       }
     </style>
   </head>
+
   <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+    <div class="container">
+      <!-- Panel izquierdo: subida -->
+      <section class="card">
+        <div class="badge">Arquitectura Serverless · Firebase</div>
+        <h1>Procesamiento de Imágenes</h1>
+        <p class="subtitle">
+          Sube una imagen y observa cómo el backend serverless genera la miniatura
+          y registra los metadatos en Firestore y Storage.
+        </p>
+
+        <form id="uploadForm">
+          <label for="fileInput">1. Selecciona una imagen</label>
+
+          <label class="file-input">
+            <input id="fileInput" type="file" accept="image/*" />
+            <span id="fileLabel">Haz clic para elegir un archivo (JPG, PNG, etc.)</span>
+          </label>
+
+          <button type="submit" id="uploadButton">
+            Subir imagen y procesar
+          </button>
+
+          <div id="status" class="status"></div>
+        </form>
+
+        <div class="pill-row">
+          <div class="pill">Cloud Functions (Node.js)</div>
+          <div class="pill">Firebase Storage</div>
+          <div class="pill">Cloud Firestore</div>
+          <div class="pill">Emuladores locales</div>
+        </div>
+      </section>
+
+      <!-- Panel derecho: galería -->
+      <section class="card">
+        <div class="gallery-header">
+          <h2>Imágenes procesadas</h2>
+          <span id="counter">0 elementos</span>
+        </div>
+        <div id="imagesGrid" class="grid"></div>
+        <div id="emptyState" class="empty">
+          No hay imágenes aún. Sube una desde el panel izquierdo.
+        </div>
+      </section>
     </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
   </body>
 </html>
